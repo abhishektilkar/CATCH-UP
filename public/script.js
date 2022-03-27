@@ -21,17 +21,31 @@ navigator.mediaDevices.getUserMedia({
     audio: true,
 }).then(stream => {
     myVideoStream = stream
-    addVideoStream(myVideo, stream);
+    addVideoStream(myVideo, stream);;
 
+    socket.on('user-connected', (userId) => {
+        connectToNewUser(userId, stream);
+    })
+    
 })
 
-socket.emit('join-room', ROOM_ID);
 
-socket.on('user-connected', () => {
-    connectToNewUser();
+peer.on('open', id => {
+
+// this person with id joining the room of ROOM_ID
+    socket.emit('join-room', ROOM_ID, id);
 })
-const connectToNewUser = () => {
-    console.log('new user');
+
+
+
+const connectToNewUser = (userId, stream) => {
+    // console.log('new user with id', userId);
+    const call = peer.call(userId, stream)
+    const video = document.createElement('video')
+    call.on('stream', userVideoStream => {
+        addVideoStream(video, userVideoStream);
+    })
+
 }
 
 const addVideoStream = (video, stream) => {
